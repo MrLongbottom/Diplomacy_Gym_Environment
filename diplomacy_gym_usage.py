@@ -1,6 +1,6 @@
-import random
-
 from diplomacy_gym_environment import DiplomacyEnvironment
+import random
+from tqdm import tqdm
 
 
 def random_move():
@@ -18,10 +18,15 @@ def random_nn_move():
     return env.step(actions)
 
 
+def generator():
+    while not env.game.is_game_done:
+        yield
+
+
 if __name__ == '__main__':
     env = DiplomacyEnvironment()
 
-    while not env.game.is_game_done:
+    for _ in tqdm(generator()):
         obs, reward, done, info = random_move()
 
     print('game done.')

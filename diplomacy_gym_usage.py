@@ -6,18 +6,19 @@ from diplomacy_gym_environment import DiplomacyEnvironment
 def move():
     actions = {}
 
-    for power_name, power in env.game.powers.items():
+    for power_name in env.game.powers.keys():
         actions[power_name] = [random.choice(env.game.get_all_possible_orders()[loc]) for loc in
                                env.game.get_orderable_locations(power_name)]
 
     return env.step(actions)
 
 
-env = DiplomacyEnvironment()
+if __name__ == '__main__':
+    env = DiplomacyEnvironment()
 
-while not env.game.is_game_done:
-    obs, reward, done, info = move()
+    while not env.game.is_game_done:
+        obs, reward, done, info = move()
 
-print('game done.')
+    print('game done.')
 
 

@@ -34,7 +34,7 @@ class DiplomacyEnvironment(gym.Env):
                 neworder = order
                 if self.game.phase_type == 'M':
                     neworder = neworder[2:]
-                    neworder = neworder.replace(' F ', ' ').replace(' A ', ' ').replace(' VIA', '')
+                    neworder = neworder.replace(' F ', ' ').replace(' A ', ' ')
                 elif self.game.phase_type == 'A':
                     if neworder == 'WAIVE':
                         neworder = 'W ' + loc + ' B'
@@ -48,7 +48,6 @@ class DiplomacyEnvironment(gym.Env):
 
         reward_n = [len(new_state['centers'][power]) - len(old_state['centers'][power]) for power in action_n.keys()]
         done = self.game.is_game_done
-
         return [obs for _ in action_n], reward_n, [done for _ in action_n], [{} for _ in action_n]
 
     def reset(self):
@@ -142,7 +141,7 @@ class DiplomacyEnvironment(gym.Env):
 
             # region Convoy Move Order
             if '/' not in loc and game.map.area_type(loc) == 'COAST':
-                unchecked_waters = [x for x in neighbors if game.map.area_type(x) == 'WATER']
+                unchecked_waters = [loc]
                 checked_waters = []
                 destinations = []
                 while len(unchecked_waters) > 0:
@@ -152,10 +151,10 @@ class DiplomacyEnvironment(gym.Env):
                         if game.map.area_type(n) == 'WATER' and n not in unchecked_waters and n not in checked_waters:
                             unchecked_waters.append(n)
                         if game.map.area_type(
-                                n) == 'COAST' and n not in destinations and n not in neighbors and n != loc and '/' not in n:
+                                n) == 'COAST' and n not in destinations and n != loc and '/' not in n:
                             destinations.append(n)
                 for d in destinations:
-                    action_list.append(loc + ' - ' + d)
+                    action_list.append(loc + ' - ' + d + ' VIA')
                     convoys[d].append(loc)
             # endregion
 

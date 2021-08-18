@@ -18,7 +18,9 @@ class DiplomacyEnvironment(gym.Env):
 
     def step(self, action_n):
         old_state = self.game.get_state()
-        # TODO action_list index to diplomacy order conversion
+        # TODO handle the observation space described by the gym as an alternative
+            # TODO convert numbers to action_list indexes
+            # TODO action_list indexes to diplomacy order conversion
         for power, orders in action_n.items():
             self.game.set_orders(power, orders)
         self.game.process()

@@ -1,6 +1,6 @@
 import random
 
-from diplomacy_environment import DiplomacyEnvironment
+from diplomacy_gym_environment import DiplomacyEnvironment
 
 
 def move():

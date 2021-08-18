@@ -2,7 +2,6 @@ import diplomacy
 import gym
 import numpy as np
 from gym import spaces
-from diplomacy import Game
 from diplomacy.utils.export import to_saved_game_format
 
 

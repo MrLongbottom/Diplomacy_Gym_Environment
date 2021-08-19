@@ -277,7 +277,7 @@ class DiplomacyEnvironment(gym.Env):
                             # add split-coasts middles
                             if '/' in n:
                                 for x in split_coasts[n]:
-                                    if '/' not in x:
+                                    if '/' not in x and x not in destinations:
                                         destinations.append(x)
                             else:
                                 destinations.append(n)

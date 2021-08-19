@@ -27,7 +27,7 @@ if __name__ == '__main__':
     env = DiplomacyEnvironment()
 
     for _ in tqdm(generator()):
-        obs, reward, done, info = random_move()
+        obs, reward, done, info = random_nn_move()
 
     print('game done.')
 

@@ -1,6 +1,7 @@
 from diplomacy_gym_environment import DiplomacyEnvironment
 import random
 from tqdm import tqdm
+import numpy as np
 
 
 def random_move():
@@ -14,7 +15,7 @@ def random_move():
 def random_nn_move():
     actions = {}
     for power_name in env.game.powers.keys():
-        actions[power_name] = [random.random() for _ in env.action_list]
+        actions[power_name] = np.array([random.random() for _ in env.action_list])
     return actions
 
 

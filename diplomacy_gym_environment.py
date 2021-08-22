@@ -14,9 +14,9 @@ from tqdm import tqdm
 class DiplomacyEnvironment(gym.Env):
 
     def __init__(self, prints=False, render_path=None):
+        super(DiplomacyEnvironment, self).__init__()
         self.prints = prints
         self.render_path = render_path
-        super(DiplomacyEnvironment, self).__init__()
         self.game = diplomacy.Game()
         self.action_list, self.action_loc_dict, self.action_order_dict = self._action_list()
         self.reward_range = (-self.game.win, self.game.win)
@@ -56,8 +56,8 @@ class DiplomacyEnvironment(gym.Env):
         self._check_for_unaccounted_possible_actions()
 
         reward_n = [len(new_state['centers'][power]) - len(old_state['centers'][power]) for power in action_n.keys()]
-        done = self.game.is_game_done
-        return [obs for _ in action_n], reward_n, [done for _ in action_n], [{} for _ in action_n]
+        done_n = [self.game.is_game_done for _ in action_n]
+        return [obs for _ in action_n], reward_n, done_n, [{} for _ in action_n]
 
     def reset(self):
         self.game = diplomacy.Game()
@@ -218,6 +218,7 @@ class DiplomacyEnvironment(gym.Env):
         action_loc_dict = {}
         action_order_dict = {}
         # convert location names to all caps
+        # locs is a dictionary which converts every location into a list of all its neighbors
         locs = {}
         split_coasts = {x: y for x, y in game.map.loc_coasts.items() if len(y) > 1}
         for loc, neighbors in game.map.loc_abut.items():

@@ -28,7 +28,7 @@ class DiplomacyEnvironment(gym.Env):
 
     def step(self, action_n, render=False):
         old_state = self.game.get_state()
-
+        info = {}
         # diplomacy package string orders input
         if isinstance(list(action_n.values())[0][0], str):
             for power, orders in action_n.items():
@@ -39,6 +39,7 @@ class DiplomacyEnvironment(gym.Env):
                 print('Converting nn input to actions.')
             for power, orders in self._nn_input_to_orders(action_n).items():
                 self.game.set_orders(power, orders)
+                info[power] = [self.action_list.index(self._order_to_action(x)) for x in orders]
         # Wrong action format
         else:
             raise Exception('wrong action input. Either do dict(str,str) based on the diplomacy package '
@@ -55,9 +56,12 @@ class DiplomacyEnvironment(gym.Env):
         # Check to see if all possible orders are contained within action list
         self._check_for_unaccounted_possible_actions()
 
+        # Reward = new centers
         reward_n = [len(new_state['centers'][power]) - len(old_state['centers'][power]) for power in action_n.keys()]
+        # Reward = curr centers
+        #reward_n = [len(new_state['centers'][power]) for power in action_n.keys()]
         done = self.game.is_game_done
-        return [obs for _ in action_n], reward_n, [done for _ in action_n], [{} for _ in action_n]
+        return [obs for _ in action_n], reward_n, [done for _ in action_n], info
 
     def reset(self):
         self.game = diplomacy.Game()
@@ -102,8 +106,15 @@ class DiplomacyEnvironment(gym.Env):
             power_orders = []
             for loc in self.game.get_orderable_locations(power):
                 # dict of action_list index and value for actions on orderable locations
-                orderable_action_values = {x: y for x, y in dict(zip(self.action_list, action_n[power])).items()
-                                           if self.action_loc_dict[x] == loc}
+                if len(self.game.map.loc_coasts[loc]) > 1:
+                    orderable_action_values = {x: y for x, y in dict(zip(self.action_list, numbers)).items()
+                                               if self.action_loc_dict[x] == loc[0] or
+                                               self.action_loc_dict[x] == loc[1] or
+                                               self.action_loc_dict[x] == loc[2] or
+                                               x == 'WAIVE'}
+                else:
+                    orderable_action_values = {x: y for x, y in dict(zip(self.action_list, numbers)).items()
+                                           if self.action_loc_dict[x] == loc or x == 'WAIVE'}
 
                 # reduce to only possible orders
                 action_orders = {x: self.action_order_dict[x] for x in orderable_action_values.keys()}
@@ -152,12 +163,28 @@ class DiplomacyEnvironment(gym.Env):
         elif action[-2:] == ' H' or action[-2:] == ' D':
             action_variations.append('F ' + action)
             action_variations.append('A ' + action)
-        elif action[:2] == 'W ':
-            action_variations.append('WAIVE')
         elif action[-2:] == ' B':
             action_variations.append(action)
+        elif action == 'WAIVE':
+            action_variations.append('WAIVE')
+        else:
+            raise Exception('Action type not covered')
 
         return action_variations
+
+    #@staticmethod
+    def _order_to_action(self, order):
+        if order[-2:] == ' B':
+            action = order
+        elif ' R ' in order:
+            action = order[2:].replace(' R ', ' - ')
+        else:
+            matches = re.split(r"^[AF] | [AF] ", order)
+            matches = [x for x in matches if len(x) != 0]
+            action = ' '.join(matches)
+        if action not in self.action_list:
+            raise Exception('Order to action translation unsuccessful')
+        return action
 
     def _action_conversion(self, action, loc):
         order = [x for x in self.action_order_dict[action] if x in self.game.get_all_possible_orders()[loc]]
@@ -180,7 +207,7 @@ class DiplomacyEnvironment(gym.Env):
                     neworder = neworder.replace(' F ', ' ').replace(' A ', ' ')
                 elif self.game.phase_type == 'A':
                     if neworder == 'WAIVE':
-                        neworder = 'W ' + loc + ' B'
+                        neworder = 'WAIVE'
                     if neworder[-2:] == ' D':
                         neworder = neworder[2:]
                 elif self.game.phase_type == 'R':
@@ -239,12 +266,13 @@ class DiplomacyEnvironment(gym.Env):
                 action_list.append(action)
                 action_loc_dict[action] = loc
                 action_order_dict[action] = self._action_to_orders(action)
-
+            # region Build Orders
             if loc in [z for c in [y for x in game.map.homes.values() for y in x] for z in game.map.loc_coasts[c]]:
-                for action in ['A ' + loc + ' B', 'F ' + loc + ' B', 'W ' + loc + ' B']:
+                for action in ['A ' + loc + ' B', 'F ' + loc + ' B', 'WAIVE']:
                     action_list.append(action)
                     action_loc_dict[action] = loc
                     action_order_dict[action] = self._action_to_orders(action)
+            # endregion
 
             # region Move Orders
             for n in neighbors:

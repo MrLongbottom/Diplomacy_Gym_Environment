@@ -213,4 +213,5 @@ if __name__ == '__main__':
         print("episode: {}, total reward: {:.2f}".format(episode_count, episode_reward))
 
         if episode_count >= 1000:
+            model.save('model/test_model')
             break

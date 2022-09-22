@@ -25,11 +25,6 @@ def random_nn_move():
     return actions
 
 
-def generator():
-    while not env.game.is_game_done:
-        yield
-
-
 # This will run through one game taking random actions using a neural network-like output in order to test the gym environment
 if __name__ == '__main__':
     # My own custom-made gym environment
@@ -42,7 +37,8 @@ if __name__ == '__main__':
         action = random_nn_move()
 
         # Apply the sampled action in our environment
-        state_next, reward, done, info = env.step(action)
+        state_next, reward, done, info, rendering = env.step(action, render=True)
+        print(rendering)
         finish = done[0]
         print(f'reward: {reward[0]}')
         test = env.render()

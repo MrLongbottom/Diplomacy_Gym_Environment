@@ -9,6 +9,7 @@ import collections
 from gym import spaces
 from diplomacy.utils.export import to_saved_game_format
 from tqdm import tqdm
+from IPython.display import SVG, display
 
 
 class DiplomacyEnvironment(gym.Env):
@@ -47,7 +48,7 @@ class DiplomacyEnvironment(gym.Env):
         if self.prints:
             print('Orders committed.')
         if render:
-            self.render()
+            rendering = self.render()
 
         self.game.process()
         # update state and observation
@@ -61,7 +62,10 @@ class DiplomacyEnvironment(gym.Env):
         # Reward = curr centers
         #reward_n = [len(new_state['centers'][power]) for power in action_n.keys()]
         done = self.game.is_game_done
-        return [obs for _ in action_n], reward_n, [done for _ in action_n], info
+        if render:
+            return [obs for _ in action_n], reward_n, [done for _ in action_n], info, rendering
+        else:
+            return [obs for _ in action_n], reward_n, [done for _ in action_n], info
 
     def reset(self):
         self.game = diplomacy.Game()
@@ -70,11 +74,12 @@ class DiplomacyEnvironment(gym.Env):
     def render(self, mode='human', path=None):
         name = self.game.current_short_phase[1:5]+self.game.current_short_phase[0]+self.game.current_short_phase[5:]
         if path:
-            return self.game.render(output_path=path + name + '.svg')
+            render = self.game.render(output_path=path + name + '.svg')
         elif self.render_path:
-            return self.game.render(output_path=self.render_path + name + '.svg')
+            render = self.game.render(output_path=self.render_path + name + '.svg')
         else:
-            return self.game.render()
+            render = self.game.render()
+        return render
 
     def observation(self):
         state = self.game.get_state()

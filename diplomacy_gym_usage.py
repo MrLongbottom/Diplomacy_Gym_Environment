@@ -34,11 +34,6 @@ def random_vs_nonrandom_move(probs):
     return actions
 
 
-def generator():
-    while not env.game.is_game_done:
-        yield
-
-
 def create_model():
     inputs = layers.Input(shape=(num_inputs,))
     common1 = layers.Dense(num_middle, activation="relu")(inputs)

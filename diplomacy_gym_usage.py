@@ -6,6 +6,8 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers
 
+# This is a template setup on how to actually use the Gym environment I made, by setting up a RL agent.
+
 
 def random_move():
     actions = {}
@@ -49,27 +51,35 @@ def create_model():
 
 
 if __name__ == '__main__':
+    # My own custom-made gym environment
+    env = DiplomacyEnvironment(prints=False, render_path='maps/')
+
+    # seed for reproducibility
     seed = 42
+
+    # setting Epsilon (exploration vs. exploitation parameter)
     gamma = 0.99
     epsilon = 1.0
     epsilon_min = 0.1
     epsilon_max = 1.0
     epsilon_interval = (epsilon_max - epsilon_min)
+
     batch_size = 32
     max_steps_per_episode = 10000
 
-    env = DiplomacyEnvironment(prints=False, render_path='maps/')
-
+    # size of NN layers
     num_inputs = env.observation_space.n
     num_actions = env.action_space.shape[0]
     num_middle = 128
 
+    # defining learning model
     model = create_model()
     model_target = create_model()
 
     optimizer = keras.optimizers.Adam(learning_rate=0.00025, clipnorm=1.0)
     loss_function = keras.losses.Huber()
 
+    # stats to keep track of
     action_history = []
     action_prob_history = []
     state_history = []
@@ -83,9 +93,10 @@ if __name__ == '__main__':
 
     # Number of frames to take random action and observe output
     #epsilon_random_frames = 50000
-    epsilon_random_frames = 100
+    epsilon_random_frames = 1000
     # Number of frames for exploration
-    epsilon_greedy_frames = 1000000.0
+    #epsilon_greedy_frames = 1000000.0
+    epsilon_greedy_frames = 1000
     # Maximum replay length
     # Note: The Deepmind paper suggests 1000000 however this causes memory issues
     max_memory_length = 100000

@@ -4,7 +4,6 @@ from tqdm import tqdm
 import numpy as np
 import tensorflow as tf
 from tensorflow import keras
-from tensorflow.keras import layers
 
 # This is a template setup on how to actually use the Gym environment I made, by setting up a RL agent.
 
@@ -35,12 +34,12 @@ def random_vs_nonrandom_move(probs):
 
 
 def create_model():
-    inputs = layers.Input(shape=(num_inputs,))
-    common1 = layers.Dense(num_middle, activation="relu")(inputs)
-    common2 = layers.Dense(num_middle, activation="relu")(common1)
-    common3 = layers.Dense(num_middle, activation="relu")(common2)
-    common4 = layers.Dense(num_middle, activation="relu")(common3)
-    common5 = layers.Dense(num_actions, activation="sigmoid")(common4)
+    inputs = keras.layers.Input(shape=(num_inputs,))
+    common1 = keras.layers.Dense(num_middle, activation="relu")(inputs)
+    common2 = keras.layers.Dense(num_middle, activation="relu")(common1)
+    common3 = keras.layers.Dense(num_middle, activation="relu")(common2)
+    common4 = keras.layers.Dense(num_middle, activation="relu")(common3)
+    common5 = keras.layers.Dense(num_actions, activation="sigmoid")(common4)
 
     return keras.Model(inputs=inputs, outputs=common5)
 

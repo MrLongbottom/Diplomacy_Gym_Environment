@@ -54,6 +54,8 @@ class DiplomacyEnvironment(gym.Env):
         # update state and observation
         new_state = self.game.get_state()
         obs = self.observation()
+
+        info = new_state['name'], info
         # Check to see if all possible orders are contained within action list
         self._check_for_unaccounted_possible_actions()
 

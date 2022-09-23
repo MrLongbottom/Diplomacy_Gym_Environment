@@ -57,15 +57,25 @@ class DiplomacyEnvironment(gym.Env):
         # Check to see if all possible orders are contained within action list
         self._check_for_unaccounted_possible_actions()
 
-        # Reward = new centers
-        reward_n = [len(new_state['centers'][power]) - len(old_state['centers'][power]) for power in action_n.keys()]
-        # Reward = curr centers
-        #reward_n = [len(new_state['centers'][power]) for power in action_n.keys()]
-        done = self.game.is_game_done
+        game_done = self.game.is_game_done
+        new_state_centers = [len(new_state['centers'][power]) for power in action_n.keys()]
+        old_state_centers = [len(old_state['centers'][power]) for power in action_n.keys()]
+
+        # Reward = change in centers
+        reward_n = [new_state_centers[power] - old_state_centers[power] for power in range(len(action_n.keys()))]
+        # Check if any player died
+        done = [r == 0 or game_done for r in new_state_centers]
+
+        # Give extra end reward equal to centers owned if the player is done
+        # Give extra 3 end penalty if player was eliminated
+        # TODO check that this is working correctly
+        if True in done:
+            reward_n += [new_state_centers[i] if new_state_centers[i] > 0 else -3 if done[i] else 0 for i in range(len(reward_n))]
+
         if render:
-            return [obs for _ in action_n], reward_n, [done for _ in action_n], info, rendering
+            return [obs for _ in action_n], reward_n, done, info, rendering
         else:
-            return [obs for _ in action_n], reward_n, [done for _ in action_n], info
+            return [obs for _ in action_n], reward_n, done, info
 
     def reset(self):
         self.game = diplomacy.Game()

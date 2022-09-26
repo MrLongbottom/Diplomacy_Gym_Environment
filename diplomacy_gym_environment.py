@@ -21,8 +21,8 @@ class DiplomacyEnvironment(gym.Env):
         self.game = diplomacy.Game()
         self.action_list, self.action_loc_dict, self.action_order_dict = self._action_list()
         self.reward_range = (-self.game.win, self.game.win)
-        high = np.array([1.0 for _ in self.action_list])
-        self.action_space = spaces.Box(high=high, low=-high, dtype=np.float32)
+        high = np.array([1.0 for _ in self.action_list], dtype='float32')
+        self.action_space = spaces.Box(high=high, low=-high)
         self.observation_space = spaces.MultiBinary(len(self.observation()))
         if self.prints:
             print('Initialization done.')

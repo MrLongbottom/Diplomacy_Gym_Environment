@@ -1,15 +1,9 @@
+import os.path
 from diplomacy_gym_environment import DiplomacyEnvironment
 import random
-from tqdm import tqdm
-import numpy as np
-import tensorflow as tf
-from tensorflow import keras
-from tensorflow.keras import layers
-from IPython.display import SVG, display
+
 
 # This is a template setup on how to actually use the Gym environment I made, by setting up a RL agent.
-
-
 def random_move():
     actions = {}
     for power_name in env.game.powers.keys():
@@ -30,10 +24,15 @@ def generator():
         yield
 
 
-# This will run through one game taking random actions using a neural network-like output in order to test the gym environment
+# This will run through one game taking random actions using a neural network-like output in order to test the gym
+# environment
 if __name__ == '__main__':
     # My own custom-made gym environment
-    env = DiplomacyEnvironment(prints=False, render_path='maps/')
+    maps_path = 'maps/'
+    if not os.path.exists(maps_path):
+        os.makedirs(maps_path)
+
+    env = DiplomacyEnvironment(prints=False, render_path=None)
 
     finish = False
 

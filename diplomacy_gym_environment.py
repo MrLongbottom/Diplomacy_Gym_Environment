@@ -9,6 +9,7 @@ import collections
 from gym import spaces
 from diplomacy.utils.export import to_saved_game_format
 from tqdm import tqdm
+from IPython.display import SVG, display
 
 
 class DiplomacyEnvironment(gym.Env):
@@ -20,8 +21,8 @@ class DiplomacyEnvironment(gym.Env):
         self.game = diplomacy.Game()
         self.action_list, self.action_loc_dict, self.action_order_dict = self._action_list()
         self.reward_range = (-self.game.win, self.game.win)
-        high = np.array([1.0 for _ in self.action_list])
-        self.action_space = spaces.Box(high=high, low=-high, dtype=np.float32)
+        high = np.array([1.0 for _ in self.action_list], dtype='float32')
+        self.action_space = spaces.Box(high=high, low=-high)
         self.observation_space = spaces.MultiBinary(len(self.observation()))
         if self.prints:
             print('Initialization done.')
@@ -47,21 +48,36 @@ class DiplomacyEnvironment(gym.Env):
         if self.prints:
             print('Orders committed.')
         if render:
-            self.render()
+            rendering = self.render()
 
         self.game.process()
         # update state and observation
         new_state = self.game.get_state()
         obs = self.observation()
+
+        info = new_state['name'], info
         # Check to see if all possible orders are contained within action list
         self._check_for_unaccounted_possible_actions()
 
-        # Reward = new centers
-        reward_n = [len(new_state['centers'][power]) - len(old_state['centers'][power]) for power in action_n.keys()]
-        # Reward = curr centers
-        #reward_n = [len(new_state['centers'][power]) for power in action_n.keys()]
-        done = self.game.is_game_done
-        return [obs for _ in action_n], reward_n, [done for _ in action_n], info
+        game_done = self.game.is_game_done
+        new_state_centers = [len(new_state['centers'][power]) for power in action_n.keys()]
+        old_state_centers = [len(old_state['centers'][power]) for power in action_n.keys()]
+
+        # Reward = change in centers
+        reward_n = [new_state_centers[power] - old_state_centers[power] for power in range(len(action_n.keys()))]
+        # Check if any player died
+        done = [r == 0 or game_done for r in new_state_centers]
+
+        # Give extra end reward equal to centers owned if the player is done
+        # Give extra 3 end penalty if player was eliminated
+        # TODO check that this is working correctly
+        if True in done:
+            reward_n += [new_state_centers[i] if new_state_centers[i] > 0 else -3 if done[i] else 0 for i in range(len(reward_n))]
+
+        if render:
+            return [obs for _ in action_n], reward_n, done, info, rendering
+        else:
+            return [obs for _ in action_n], reward_n, done, info
 
     def reset(self):
         self.game = diplomacy.Game()
@@ -70,11 +86,12 @@ class DiplomacyEnvironment(gym.Env):
     def render(self, mode='human', path=None):
         name = self.game.current_short_phase[1:5]+self.game.current_short_phase[0]+self.game.current_short_phase[5:]
         if path:
-            return self.game.render(output_path=path + name + '.svg')
+            render = self.game.render(output_path=path + name + '.svg')
         elif self.render_path:
-            return self.game.render(output_path=self.render_path + name + '.svg')
+            render = self.game.render(output_path=self.render_path + name + '.svg')
         else:
-            return self.game.render()
+            render = self.game.render()
+        return render
 
     def observation(self):
         state = self.game.get_state()

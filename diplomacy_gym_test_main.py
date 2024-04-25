@@ -1,4 +1,5 @@
 import os.path
+from tqdm import tqdm
 from diplomacy_gym_environment import DiplomacyEnvironment
 from diplomacy_gym_simple_rl_agent import DiplomacySimpleRlAgent
 
@@ -10,5 +11,5 @@ from diplomacy_gym_simple_rl_agent import DiplomacySimpleRlAgent
 if __name__ == '__main__':
     env = DiplomacyEnvironment(prints=False, render_path=None)
     agent = DiplomacySimpleRlAgent(env)
-    for i in range(100):
+    for i in tqdm(range(100), position=1, leave=True):
         agent.play()

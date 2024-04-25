@@ -1,6 +1,6 @@
 import random
 from diplomacy_gym_environment import DiplomacyEnvironment
-
+from tqdm import tqdm
 
 class DiplomacySimpleRlAgent:
 
@@ -50,19 +50,21 @@ class DiplomacySimpleRlAgent:
         player = 0, list(self.env.game.powers.keys())[0]
         finish = False
 
-        while not finish:
-            actions = {}
-            for power_name in self.env.game.powers.keys():
-                if power_name == player[1]:
-                    actions = self.decide_player_action(power_name, current_state, actions)
-                else:
-                    actions = self.random_nn_player_move(power_name, actions)
+        with tqdm(total = 500, position=0, leave=True) as pbar:
+            while not finish:
+                actions = {}
+                for power_name in self.env.game.powers.keys():
+                    if power_name == player[1]:
+                        actions = self.decide_player_action(power_name, current_state, actions)
+                    else:
+                        actions = self.random_nn_player_move(power_name, actions)
 
-            # Apply the sampled action in our environment
-            state_next, reward, done, info = self.env.step(actions, render=self.render)
-            self.log_experience(player[1], current_state, actions[player[1]], reward[player[0]])
+                # Apply the sampled action in our environment
+                state_next, reward, done, info = self.env.step(actions, render=self.render)
+                self.log_experience(player[1], current_state, actions[player[1]], reward[player[0]])
 
-            current_state = state_next[player[0]]
-            finish = done[player[0]]
-            print(f'turn: {info[0]}, reward: {reward[player[0]]}')
+                current_state = state_next[player[0]]
+                finish = done[player[0]]
+                pbar.write(f'turn: {info[0]}, reward: {reward[player[0]]}')
+                pbar.update(1)
         print(f"game done.")

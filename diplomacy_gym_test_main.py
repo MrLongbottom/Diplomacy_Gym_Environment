@@ -10,4 +10,5 @@ from diplomacy_gym_simple_rl_agent import DiplomacySimpleRlAgent
 if __name__ == '__main__':
     env = DiplomacyEnvironment(prints=False, render_path=None)
     agent = DiplomacySimpleRlAgent(env)
-    agent.play()
+    for i in range(100):
+        agent.play()

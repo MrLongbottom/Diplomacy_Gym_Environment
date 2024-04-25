@@ -113,7 +113,7 @@ class DiplomacyEnvironment(gym.Env):
         # Fleet retreats
         for power in map.powers:
             nn_input.extend(['F ' + loc in state['retreats'][power] for loc in map.loc_name.values()])
-        return nn_input
+        return np.array(nn_input)
 
     def _nn_input_to_orders(self, action_n):
         # convert numbers to action_list indexes

@@ -11,5 +11,7 @@ from diplomacy_gym_simple_rl_agent import DiplomacySimpleRlAgent
 if __name__ == '__main__':
     env = DiplomacyEnvironment(prints=False, render_path=None)
     agent = DiplomacySimpleRlAgent(env)
-    for i in tqdm(range(100), position=1, leave=True):
+    pbar = tqdm(range(2), position=1, leave=True)
+    for i in pbar:
+        pbar.set_description(f"Game {i}")
         agent.play()

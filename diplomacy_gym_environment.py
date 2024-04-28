@@ -96,23 +96,25 @@ class DiplomacyEnvironment(gym.Env):
     def observation(self):
         state = self.game.get_state()
         map = self.game.map
+        army_locations = [k for k, v in map.loc_type.items() if v != "WATER"]
+        fleet_locations = [k for k, v in map.loc_type.items() if v != "LAND"]
         nn_input = []
         # Armies
         for power in map.powers:
-            nn_input.extend(['A ' + loc in state['units'][power] for loc in map.loc_name.values()])
+            nn_input.extend(['A ' + loc in state['units'][power] for loc in army_locations])
         # Fleets
         for power in map.powers:
-            nn_input.extend(['F ' + loc in state['units'][power] for loc in map.loc_name.values()])
+            nn_input.extend(['F ' + loc in state['units'][power] for loc in fleet_locations])
         # Centers
         for power in map.powers:
             nn_input.extend([loc in state['centers'][power] for loc in map.scs])
         # Retreats
         # Army retreats
         for power in map.powers:
-            nn_input.extend(['A ' + loc in state['retreats'][power] for loc in map.loc_name.values()])
+            nn_input.extend(['A ' + loc in state['retreats'][power] for loc in army_locations])
         # Fleet retreats
         for power in map.powers:
-            nn_input.extend(['F ' + loc in state['retreats'][power] for loc in map.loc_name.values()])
+            nn_input.extend(['F ' + loc in state['retreats'][power] for loc in fleet_locations])
         return np.array(nn_input)
 
     def _nn_input_to_orders(self, action_n):

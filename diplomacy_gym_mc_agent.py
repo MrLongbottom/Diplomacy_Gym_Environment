@@ -10,17 +10,23 @@ from diplomacy_gym_environment import DiplomacyEnvironment
 from tqdm import tqdm
 
 
-class DiplomacySimpleRlAgent:
-    def __init__(self, env: DiplomacyEnvironment, render=False, explore_rate=0.1, learning_rate=0.1, load=True, use_nn_states=True, path='simple_experience.pkl'):
+class DiplomacyMCAgent:
+    def __init__(self, env: DiplomacyEnvironment, render=False, explore_rate=0.1, learning_rate=0.2, reward_discount = 0.9, load=True, use_nn_states=True, path='mc_experience.pkl'):
+        # Settings variables
         self.env = env
         self.render = render
-        self.player = None
+        self.path = path
+        self.use_nn_states = use_nn_states
+
+        # Statistical variables
         self.new_state = 0
         self.old_state = 0
+        self.errors = []
+
+        # Learning variables
         self.explore_rate = explore_rate
         self.learning_rate = learning_rate
-        self.use_nn_states = use_nn_states
-        self.path = path
+        self.reward_discount = reward_discount
 
         # simple dict which takes state and returns a (action, reward) list
         self.experiences = {}
@@ -65,28 +71,29 @@ class DiplomacySimpleRlAgent:
             self.new_state += 1
         return actions
 
-    def log_experience(self, power_name, state, action, player_reward):
-        key = (power_name, tuple(state))
-        if key in self.experiences:
+    def log_experience(self, power_name, player_states, player_actions, player_rewards):
+        running_reward = 0
+        for state, action, reward in zip(reversed(player_states), reversed(player_actions), reversed(player_rewards)):
+            running_reward = (running_reward * self.reward_discount) + reward
+            key = (power_name, tuple(state))
             # Known state
-            action_rewards = self.experiences[key]
-            same_action = next(((a, r) for a, r in action_rewards if a == action), None)
-            if same_action is None:
+            if key in self.experiences:
+                action_rewards = self.experiences[key]
+                same_action = next(((a, r) for a, r in action_rewards if a == action), None)
                 # New action
-                self.experiences[key].append((action, player_reward))
-            else:
+                if same_action is None:
+                    self.experiences[key].append((action, running_reward))
                 # Known action (adjust reward)
-                if same_action[1] != player_reward:
-                    error = (player_reward - same_action[1])
+                else:
+                    error = (running_reward - same_action[1])
                     new_reward = same_action[1] + (error * self.learning_rate)
                     new_action = (same_action[0], new_reward)
                     action_index = self.experiences[key].index(same_action)
                     self.experiences[key][action_index] = new_action
-
                     self.errors.append(abs(error))
-        else:
             # New State
-            self.experiences[key] = [(action, player_reward)]
+            else:
+                self.experiences[key] = [(action, running_reward)]
 
     def save_experiences_to_file(self, path):
         with open(path, 'wb') as file:
@@ -122,15 +129,20 @@ class DiplomacySimpleRlAgent:
     def play(self, save=True, render=None):
         if render is None:
             render = self.render
-        self.game_reward_total = 0
         self.new_state = 0
         self.old_state = 0
         self.errors = []
+
         current_state = self.env.reset()
         players = [(x, y, False) for x, y in enumerate(list(self.env.game.powers.keys()))]
 
+        episode_states = {x[1]: [] for x in players}
+        episode_actions = {x[1]: [] for x in players}
+        episode_rewards = {x[1]: [] for x in players}
+        done = [False]
+
         with tqdm(total=200, position=0, leave=True) as pbar:
-            while False in [z for x, y, z in players]:
+            while False in done:
                 # Decide actions for each player
                 actions = {}
                 for player_num, player_name, player_finish in players:
@@ -150,17 +162,22 @@ class DiplomacySimpleRlAgent:
                 active_players = 0
                 for player_num, player_name, player_finish in players:
                     if not player_finish:
-                        self.log_experience(player_name, current_state, actions[player_name], reward[active_players])
+                        episode_states[player_name].append(current_state)
+                        episode_actions[player_name].append(actions[player_name])
+                        episode_rewards[player_name].append(reward[active_players])
                         active_players += 1
 
                 current_state = state_next
-                self.info = info
                 players = self.update_active_players(players, done)
 
                 pbar.set_description(f'Turn: {info[0]}')
                 if 'R' in info[0] or 'W' in info[0]:
                     pbar.total += 1
                 pbar.update(1)
+
+        # log experience
+        for player_num, player_name, player_finish in players:
+            self.log_experience(player_name, episode_states[player_name], episode_actions[player_name], episode_rewards[player_name])
 
         print(f"Game done. New states: {self.new_state}, old states: {self.old_state}, total experiences: {len(self.experiences)}, avg. error: {sum(self.errors) / max(len(self.errors), 1)}, total error {sum(self.errors)}")
         if save:

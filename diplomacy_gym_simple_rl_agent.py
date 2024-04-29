@@ -76,7 +76,8 @@ class DiplomacySimpleRlAgent:
             else:
                 # Known action (adjust reward)
                 if same_action[1] != player_reward:
-                    new_action = (same_action[0], same_action[1] + (self.learning_rate * player_reward))
+                    new_reward = same_action[1] + ((player_reward - same_action[1]) * self.learning_rate)
+                    new_action = (same_action[0], new_reward)
                     action_index = self.experiences[key].index(same_action)
                     self.experiences[key][action_index] = new_action
         else:

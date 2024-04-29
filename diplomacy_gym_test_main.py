@@ -10,7 +10,7 @@ from diplomacy_gym_simple_rl_agent import DiplomacySimpleRlAgent
 # This will run through one game taking random actions using a neural network-like output in order to test the gym environment
 if __name__ == '__main__':
     env = DiplomacyEnvironment(prints=False, render_path=None)
-    agent = DiplomacySimpleRlAgent(env)
+    agent = DiplomacySimpleRlAgent(env, use_nn_states=False)
     pbar = tqdm(range(10), position=1, leave=True)
     for i in pbar:
         pbar.set_description(f"Game {i}")

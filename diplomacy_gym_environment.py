@@ -27,24 +27,20 @@ class DiplomacyEnvironment(gym.Env):
         if self.prints:
             print('Initialization done.')
 
-    def step(self, action_n, render=False):
+    def step(self, action_n, render=False, input_is_nn=True):
         old_state = self.game.get_state()
         info = {}
         # diplomacy package string orders input
-        if isinstance(list(action_n.values())[0][0], str):
+        if not input_is_nn:
             for power, orders in action_n.items():
                 self.game.set_orders(power, orders)
         # nn list(numbers) input
-        elif isinstance(list(action_n.values())[0][0], Number):
+        else:
             if self.prints:
                 print('Converting nn input to actions.')
             for power, orders in self._nn_input_to_orders(action_n).items():
                 self.game.set_orders(power, orders)
                 info[power] = [self.action_list.index(self._order_to_action(x)) for x in orders]
-        # Wrong action format
-        else:
-            raise Exception('wrong action input. Either do dict(str,str) based on the diplomacy package '
-                            'or dict(str,list(numbers.Number)), with list having len = len(self.action_list)')
         if self.prints:
             print('Orders committed.')
         if render:
@@ -98,7 +94,7 @@ class DiplomacyEnvironment(gym.Env):
         map = self.game.map
         army_locations = [k for k, v in map.loc_type.items() if v != "WATER"]
         fleet_locations = [k for k, v in map.loc_type.items() if v != "LAND"]
-        nn_input = []
+        nn_input = [self.game.phase_type == 'M']
         # Armies
         for power in map.powers:
             nn_input.extend(['A ' + loc in state['units'][power] for loc in army_locations])

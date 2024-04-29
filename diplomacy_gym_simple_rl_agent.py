@@ -72,25 +72,45 @@ class DiplomacySimpleRlAgent:
         self.new_state = 0
         self.old_state = 0
         current_state = self.env.reset()
-        player = 0, list(self.env.game.powers.keys())[0]
-        finish = False
+        players = [(x, y, False) for x, y in enumerate(list(self.env.game.powers.keys()))]
 
         with tqdm(total=500, position=0, leave=True) as pbar:
-            while not finish:
+            while False in [z for x, y, z in players]:
+                # Decide actions for each player
                 actions = {}
-                for power_name in self.env.game.powers.keys():
-                    if power_name == player[1]:
-                        actions = self.decide_player_action(power_name, current_state, actions)
-                    else:
-                        actions = self.random_nn_player_move(power_name, actions)
+                for player_num, player_name, player_finish in players:
+                    if not player_finish:
+                        actions = self.decide_player_action(player_name, current_state, actions)
+                    #else:
+                    #    actions[player_name] = {}
 
                 # Apply the sampled action in our environment
-                state_next, reward, done, info = self.env.step(actions, render=self.render)
-                self.log_experience(player[1], current_state, actions[player[1]], reward[player[0]])
+                if self.render:
+                    state_next, reward, done, info, render = self.env.step(actions, render=self.render)
+                else:
+                    state_next, reward, done, info = self.env.step(actions, render=self.render)
 
-                current_state = state_next[player[0]]
-                finish = done[player[0]]
-                pbar.set_description(f'turn: {info[0]}, centers: {len(info[1][player[1]])}')
+                # Log experiences
+                active_players = 0
+                for player_num, player_name, player_finish in players:
+                    if not player_finish:
+                        self.log_experience(player_name, current_state, actions[player_name], reward[active_players])
+                        active_players += 1
+
+                current_state = state_next
+
+                # mark done
+                active_players = 0
+                new_players = []
+                for x, y, z in players:
+                    if z:
+                        new_players.append((x, y, z))
+                    else:
+                        new_players.append((x, y, done[active_players]))
+                        active_players += 1
+                players = new_players
+
+                pbar.set_description(f'turn: {info[0]}')
                 pbar.update(1)
 
         print(f"Game done. Total reward: {self.game_reward_total}, new states: {self.new_state}, old states: {self.old_state}. total experiences: {len(self.experiences)}")

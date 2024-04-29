@@ -75,9 +75,9 @@ class DiplomacyEnvironment(gym.Env):
             reward_n += [new_state_centers[i] if new_state_centers[i] > 0 else -3 if done[i] else 0 for i in range(len(reward_n))]
 
         if render:
-            return [obs for _ in action_n], reward_n, done, info, rendering
+            return obs, reward_n, done, info, rendering
         else:
-            return [obs for _ in action_n], reward_n, done, info
+            return obs, reward_n, done, info
 
     def reset(self):
         self.game = diplomacy.Game()

@@ -1,6 +1,10 @@
 import os
 import pickle
 import random
+import time
+
+from IPython import display
+
 from diplomacy_gym_environment import DiplomacyEnvironment
 from tqdm import tqdm
 
@@ -98,7 +102,21 @@ class DiplomacySimpleRlAgent:
                 active_players += 1
         return new_players
 
-    def play(self, save=True):
+    def render_state(self, rendering, wait_time):
+        # display actions commited state
+        display.display(display.SVG(rendering))
+        time.sleep(wait_time)
+        display.clear_output(wait=True)
+
+        # display resulting state
+        rendering = self.env.render()
+        display.display(display.SVG(rendering))
+        time.sleep(wait_time)
+        display.clear_output(wait=True)
+
+    def play(self, save=True, render=None):
+        if render is None:
+            render = self.render
         self.game_reward_total = 0
         self.new_state = 0
         self.old_state = 0
@@ -116,10 +134,11 @@ class DiplomacySimpleRlAgent:
                         actions[player_name] = []
 
                 # Apply the sampled action in our environment
-                if self.render:
-                    state_next, reward, done, info, render = self.env.step(actions, render=self.render, input_is_nn=self.use_nn_states)
+                if render:
+                    state_next, reward, done, info, rendering = self.env.step(actions, render=render, input_is_nn=self.use_nn_states)
+                    self.render_state(rendering, 1)
                 else:
-                    state_next, reward, done, info = self.env.step(actions, render=self.render, input_is_nn=self.use_nn_states)
+                    state_next, reward, done, info = self.env.step(actions, render=render, input_is_nn=self.use_nn_states)
 
                 # Log experiences
                 active_players = 0

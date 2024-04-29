@@ -79,7 +79,7 @@ class DiplomacyEnvironment(gym.Env):
         self.game = diplomacy.Game()
         return self.observation()
 
-    def render(self, mode='human', path=None):
+    def render(self, path=None):
         name = self.game.current_short_phase[1:5]+self.game.current_short_phase[0]+self.game.current_short_phase[5:]
         if path:
             render = self.game.render(output_path=path + name + '.svg')

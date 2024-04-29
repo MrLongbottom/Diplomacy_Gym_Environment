@@ -6,14 +6,14 @@ from tqdm import tqdm
 
 
 class DiplomacySimpleRlAgent:
-    def __init__(self, env: DiplomacyEnvironment, render=False, alpha=0.1, load=True):
+    def __init__(self, env: DiplomacyEnvironment, render=False, explore_rate=0.1, learning_rate=0.2, load=True):
         self.env = env
         self.render = render
         self.player = None
-        self.game_reward_total = 0
         self.new_state = 0
         self.old_state = 0
-        self.explore_rate = alpha
+        self.explore_rate = explore_rate
+        self.learning_rate = learning_rate
 
         # simple dict which takes state and returns a (action, reward) list
         if load and os.path.isfile('experience.pkl'):
@@ -52,11 +52,22 @@ class DiplomacySimpleRlAgent:
         return actions
 
     def log_experience(self, power_name, state, action, player_reward):
-        self.game_reward_total += player_reward
         key = (power_name, tuple(state))
         if key in self.experiences:
-            self.experiences[key].append((action, player_reward))
+            # Known state
+            action_rewards = self.experiences[key]
+            same_action = next(((a, r) for a, r in action_rewards if a == action), None)
+            if same_action is None:
+                # New action
+                self.experiences[key].append((action, player_reward))
+            else:
+                # Known action (adjust reward)
+                if same_action[1] != player_reward:
+                    new_action = (same_action[0], same_action[1] + (self.learning_rate * player_reward))
+                    action_index = self.experiences[key].index(same_action)
+                    self.experiences[key][action_index] = new_action
         else:
+            # New State
             self.experiences[key] = [(action, player_reward)]
 
     def save_experiences_to_file(self, path):

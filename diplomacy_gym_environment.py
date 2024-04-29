@@ -64,12 +64,6 @@ class DiplomacyEnvironment(gym.Env):
         # Check if any player died
         done = [r == 0 or game_done for r in new_state_centers]
 
-        # Give extra end reward equal to centers owned if the player is done
-        # Give extra 3 end penalty if player was eliminated
-        # TODO check that this is working correctly
-        if True in done:
-            reward_n += [new_state_centers[i] if new_state_centers[i] > 0 else -3 if done[i] else 0 for i in range(len(reward_n))]
-
         if render:
             return obs, reward_n, done, info, rendering
         else:

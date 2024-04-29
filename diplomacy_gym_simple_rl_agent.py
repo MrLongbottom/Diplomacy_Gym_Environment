@@ -3,6 +3,7 @@ import pickle
 import random
 import time
 
+import numpy as np
 from IPython import display
 
 from diplomacy_gym_environment import DiplomacyEnvironment
@@ -10,7 +11,7 @@ from tqdm import tqdm
 
 
 class DiplomacySimpleRlAgent:
-    def __init__(self, env: DiplomacyEnvironment, render=False, explore_rate=0.1, learning_rate=0.2, load=True, use_nn_states=True):
+    def __init__(self, env: DiplomacyEnvironment, render=False, explore_rate=0.1, learning_rate=0.8, load=True, use_nn_states=True):
         self.env = env
         self.render = render
         self.player = None
@@ -76,10 +77,13 @@ class DiplomacySimpleRlAgent:
             else:
                 # Known action (adjust reward)
                 if same_action[1] != player_reward:
-                    new_reward = same_action[1] + ((player_reward - same_action[1]) * self.learning_rate)
+                    error = (player_reward - same_action[1])
+                    new_reward = same_action[1] + (error * self.learning_rate)
                     new_action = (same_action[0], new_reward)
                     action_index = self.experiences[key].index(same_action)
                     self.experiences[key][action_index] = new_action
+
+                    self.errors.append(abs(error))
         else:
             # New State
             self.experiences[key] = [(action, player_reward)]
@@ -121,6 +125,7 @@ class DiplomacySimpleRlAgent:
         self.game_reward_total = 0
         self.new_state = 0
         self.old_state = 0
+        self.errors = []
         current_state = self.env.reset()
         players = [(x, y, False) for x, y in enumerate(list(self.env.game.powers.keys()))]
 
@@ -158,6 +163,6 @@ class DiplomacySimpleRlAgent:
                 pbar.update(1)
 
 
-        print(f"Game done. New states: {self.new_state}, old states: {self.old_state}, total experiences: {len(self.experiences)}")
+        print(f"Game done. New states: {self.new_state}, old states: {self.old_state}, total experiences: {len(self.experiences)}, avg. error: {sum(self.errors) / max(len(self.errors), 1)}, total error {sum(self.errors)}")
         if save:
             self.save_experiences_to_file('experience.pkl')
